@@ -1,0 +1,3 @@
+aiohttp
+wmi
+python-dateutil
