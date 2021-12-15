@@ -94,7 +94,7 @@ class Application:
         variable_response = None
         
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            if Authware.storage.read_auth_token() is not None:
+            if Authware.auth_token is not None:
                 async with session.get("/user/variables") as resp:
                     variable_response = await Authware.check_response(resp)
             else:

@@ -6,7 +6,7 @@ from authware.hwid import HardwareId
 from authware.exceptions import UpdateRequiredException, ValidationException, AuthException
 
 class Authware:
-    wrapper_ver = "1.0.1"
+    wrapper_ver = "1.0.2"
     
     app_id = None    
     version = None
@@ -16,7 +16,7 @@ class Authware:
     hwid = HardwareId()
     
     headers = {}
-    base_url = "https://982c-2a02-c7f-76e2-7a00-58da-1abc-de5a-f3ae.ngrok.io"
+    base_url = "https://api.authware.org"
     
     
     def __init__(self, headers, version, app_id):
