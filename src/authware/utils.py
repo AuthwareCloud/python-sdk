@@ -7,7 +7,7 @@ from authware.exceptions import UpdateRequiredException, ValidationException, Au
 
 
 class Authware:
-    wrapper_ver = "1.0.3"
+    wrapper_ver = "1.0.4"
 
     app_id = None
     version = None
