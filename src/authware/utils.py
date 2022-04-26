@@ -1,5 +1,7 @@
 import asyncio
 
+from requests import JSONDecodeError
+
 from aiohttp.client_reqrep import ClientResponse
 from requests.models import Response
 from authware.hwid import HardwareId
@@ -49,16 +51,30 @@ class Authware:
 
     @staticmethod
     def check_response_sync(resp: Response) -> dict:
-        response_json = resp.json()
+        try:
+            response_json = resp.json()
 
-        if (resp.status_code == 426):
-            raise UpdateRequiredException(response_json["message"])
-        elif (resp.status_code == 400):
-            raise ValidationException(response_json["message"])
-        elif (resp.status_code != 200):
-            raise AuthException(response_json['message'])
+            if resp.status_code == 429:
+                raise RatelimitedException(response_json["message"])
+            elif resp.status_code == 426:
+                raise UpdateRequiredException(response_json["message"])
+            elif (resp.status_code == 400):
+                raise ValidationException(response_json["message"])
+            elif (resp.status_code != 200):
+                raise AuthException(response_json['message'])
 
-        return response_json
+            return response_json
+        except JSONDecodeError:
+            if resp.status_code == 429:
+                raise RatelimitedException("You're being ratelimited, try again in a minute")
+            elif resp.status_code == 426:
+                raise UpdateRequiredException("An update is required for the application")
+            elif resp.status_code == 400:
+                raise ValidationException("A bad request was returned, check the data you've submitted")
+            elif resp.status_code == 403:
+                raise AuthException("You're being blocked by the API firewall, please contact Authware support")
+            elif resp.status_code != 200:
+                raise AuthException("An unhandled response was returned by the Authware API that could not be decoded, try updating the SDK and trying again")
 
     def once(func):
         future = None
