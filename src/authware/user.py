@@ -143,13 +143,13 @@ class UserVariable:
 
 
 class User:
-    def __init__(self, role, username, id, email, date_created, plan_expire, sessions, requests, user_variables):
+    def __init__(self, role, username, id, email, date_created, expiration, sessions, requests, user_variables):
         self.role = role
         self.username = username
         self.id = id
         self.email = email
         self.date_created = date_created
-        self.plan_expire = plan_expire
+        self.expiration = expiration
         self.sessions = sessions
         self.requests = requests
         self.user_variables = user_variables
@@ -163,15 +163,15 @@ class User:
         email = from_union([from_str, from_none], obj.get("email"))
         date_created = from_union(
             [from_datetime, from_none], obj.get("date_created"))
-        plan_expire = from_union(
-            [from_datetime, from_none], obj.get("plan_expire"))
+        expiration = from_union(
+            [from_datetime, from_none], obj.get("expiration"))
         sessions = from_union([lambda x: from_list(
             Session.from_dict, x), from_none], obj.get("sessions"))
         requests = from_union([lambda x: from_list(
             lambda x: x, x), from_none], obj.get("requests"))
         user_variables = from_union([lambda x: from_list(
             UserVariable.from_dict, x), from_none], obj.get("user_variables"))
-        return User(role, username, id, email, date_created, plan_expire, sessions, requests, user_variables)
+        return User(role, username, id, email, date_created, expiration, sessions, requests, user_variables)
 
     def to_dict(self):
         result = {}
@@ -182,8 +182,8 @@ class User:
         result["email"] = from_union([from_str, from_none], self.email)
         result["date_created"] = from_union(
             [lambda x: x.isoformat(), from_none], self.date_created)
-        result["plan_expire"] = from_union(
-            [lambda x: x.isoformat(), from_none], self.plan_expire)
+        result["expiration"] = from_union(
+            [lambda x: x.isoformat(), from_none], self.expiration)
         result["sessions"] = from_union([lambda x: from_list(
             lambda x: to_class(Session, x), x), from_none], self.sessions)
         result["requests"] = from_union(
