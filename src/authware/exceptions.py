@@ -6,6 +6,3 @@ class UpdateRequiredException(Exception):
 
 class ValidationException(Exception):
     pass
-
-class RatelimitedException(Exception):
-    pass
