@@ -1,5 +1,4 @@
 import re
-import aiohttp
 import requests
 
 from uuid import UUID
@@ -50,7 +49,7 @@ class Application:
                             json=fetch_payload, headers=Authware.headers)
         return Authware.check_response_sync(req)
 
-    async def authenticate(self, username: str, password: str) -> dict:
+    def authenticate(self, username: str, password: str) -> dict:
         auth_payload = {
             "app_id": self.id,
             "username": username,
@@ -59,17 +58,17 @@ class Application:
 
         auth_response = None
 
-        # There has got to be a better way of doing this
-        async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            async with session.post("/user/auth", json=auth_payload) as resp:
-                auth_response = await Authware.check_response(resp)
+        
+        req = requests.post(Authware.base_url + "/user/auth", json=auth_payload, headers=Authware.headers)
+
+        auth_response = Authware.check_response_sync(req)
 
         Authware.auth_token = auth_response["auth_token"]
         Authware.regenerate_headers()
 
         return auth_response
 
-    async def redeem_token(self, username: str, token: str) -> dict:
+    def redeem_token(self, username: str, token: str) -> dict:
         redeem_payload = {
             "app_id": self.id,
             "username": username,
@@ -78,13 +77,12 @@ class Application:
 
         redeem_response = None
 
-        async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            async with session.post("/user/renew", json=redeem_payload) as resp:
-                redeem_response = await Authware.check_response(resp)
+        req = requests.post(Authware.base_url + "/user/renew", json=redeem_payload, headers=Authware.headers)
+        redeem_response = Authware.check_response_sync(req)
 
         return redeem_response
 
-    async def create_user(self, username: str, email: str, password: str, token: str) -> dict:
+    def create_user(self, username: str, email: str, password: str, token: str) -> dict:
         create_payload = {
             "app_id": self.id,
             "username": username,
@@ -95,35 +93,33 @@ class Application:
 
         create_response = None
 
-        async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            async with session.post("/user/register", json=create_payload) as resp:
-                create_response = await Authware.check_response(resp)
+        req = requests.post(Authware.base_url + "/user/register", json=create_payload, headers=Authware.headers)
+        create_response = Authware.check_response_sync(req)
 
         return create_response
 
-    async def get_variables(self) -> dict:
+    def get_variables(self) -> dict:
         variable_payload = {
             "app_id": self.id
         }
 
         variable_response = None
+        req = None
 
-        async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            if Authware.auth_token is not None:
-                async with session.get("/user/variables") as resp:
-                    variable_response = await Authware.check_response(resp)
-            else:
-                async with session.post("/user/variables", json=variable_payload) as resp:
-                    variable_response = await Authware.check_response(resp)
+        if Authware.auth_token is not None:
+            req = requests.get(Authware.base_url + "/app/variables", headers=Authware.headers)
+        else:
+            req = requests.post(Authware.base_url + "/app/variables", json=variable_payload, headers=Authware.headers)
+
+        variable_response = Authware.check_response_sync(req)
 
         return variable_response
 
-    async def get_user(self) -> User:
+    def get_user(self) -> User:
         profile_response = None
 
-        async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
-            async with session.get("/user/profile") as resp:
-                profile_response = await Authware.check_response(resp)
+        req = requests.get(Authware.base_url + "/user/profile", headers=Authware.headers)
+        profile_response = Authware.check_response_sync(req)
 
         return User.from_dict(profile_response)
 

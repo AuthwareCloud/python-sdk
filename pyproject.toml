@@ -1,7 +1,7 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "aiohttp",
+    "requests",
     "wmi",
     "python-dateutil"
 ]
