@@ -21,3 +21,5 @@ Licensed under the MIT license, see LICENSE.MD
 - dateutil
 - wmi
 - aiohttp
+
+> This is for PyPi account recovery!
