@@ -2,7 +2,10 @@ import dateutil.parser
 import aiohttp
 
 from uuid import UUID
-from authware.utils import Authware
+
+import requests
+
+from .utils import Authware
 
 
 def from_none(x):
@@ -59,11 +62,9 @@ class Role:
         return Role(id, name, variables)
 
     def to_dict(self):
-        result = {}
-        result["id"] = from_union([lambda x: str(x), from_none], self.id)
-        result["name"] = from_union([from_str, from_none], self.name)
-        result["variables"] = from_union(
-            [lambda x: from_list(lambda x: x, x), from_none], self.variables)
+        result = {"id": from_union([lambda x: str(x), from_none], self.id),
+                  "name": from_union([from_str, from_none], self.name), "variables": from_union(
+                [lambda x: from_list(lambda x: x, x), from_none], self.variables)}
         return result
 
 
@@ -81,10 +82,8 @@ class Session:
         return Session(id, date_created)
 
     def to_dict(self):
-        result = {}
-        result["id"] = from_union([lambda x: str(x), from_none], self.id)
-        result["date_created"] = from_union(
-            [lambda x: x.isoformat(), from_none], self.date_created)
+        result = {"id": from_union([lambda x: str(x), from_none], self.id), "date_created": from_union(
+            [lambda x: x.isoformat(), from_none], self.date_created)}
         return result
 
 
@@ -106,12 +105,10 @@ class UserVariable:
         return UserVariable(id, key, value, can_user_edit)
 
     def to_dict(self):
-        result = {}
-        result["id"] = from_union([lambda x: str(x), from_none], self.id)
-        result["key"] = from_union([from_str, from_none], self.key)
-        result["value"] = from_union([from_str, from_none], self.value)
-        result["can_user_edit"] = from_union(
-            [from_bool, from_none], self.can_user_edit)
+        result = {"id": from_union([lambda x: str(x), from_none], self.id),
+                  "key": from_union([from_str, from_none], self.key),
+                  "value": from_union([from_str, from_none], self.value), "can_user_edit": from_union(
+                [from_bool, from_none], self.can_user_edit)}
         return result
 
     async def delete(self) -> dict:
@@ -119,21 +116,17 @@ class UserVariable:
             "key": self.key
         }
 
-        delete_response = None
-
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
             async with session.delete("/user/variables", json=delete_payload) as resp:
                 delete_response = await Authware.check_response(resp)
 
         return delete_response
 
-    async def update(self, newValue: str) -> dict:
+    async def update(self, new_value: str) -> dict:
         update_payload = {
             "key": self.key,
-            "value": newValue
+            "value": new_value
         }
-
-        update_response = None
 
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
             async with session.put("/user/variables", json=update_payload) as resp:
@@ -174,32 +167,25 @@ class User:
         return User(role, username, id, email, date_created, expiration, sessions, requests, user_variables)
 
     def to_dict(self):
-        result = {}
-        result["role"] = from_union(
-            [lambda x: to_class(Role, x), from_none], self.role)
-        result["username"] = from_union([from_str, from_none], self.username)
-        result["id"] = from_union([lambda x: str(x), from_none], self.id)
-        result["email"] = from_union([from_str, from_none], self.email)
-        result["date_created"] = from_union(
-            [lambda x: x.isoformat(), from_none], self.date_created)
-        result["expiration"] = from_union(
-            [lambda x: x.isoformat(), from_none], self.expiration)
-        result["sessions"] = from_union([lambda x: from_list(
-            lambda x: to_class(Session, x), x), from_none], self.sessions)
-        result["requests"] = from_union(
-            [lambda x: from_list(lambda x: x, x), from_none], self.requests)
-        result["user_variables"] = from_union([lambda x: from_list(
-            lambda x: to_class(UserVariable, x), x), from_none], self.user_variables)
+        result = {"role": from_union(
+            [lambda x: to_class(Role, x), from_none], self.role),
+            "username": from_union([from_str, from_none], self.username),
+            "id": from_union([lambda x: str(x), from_none], self.id),
+            "email": from_union([from_str, from_none], self.email), "date_created": from_union(
+                [lambda x: x.isoformat(), from_none], self.date_created), "expiration": from_union(
+                [lambda x: x.isoformat(), from_none], self.expiration), "sessions": from_union([lambda x: from_list(
+                lambda x: to_class(Session, x), x), from_none], self.sessions), "requests": from_union(
+                [lambda x: from_list(lambda x: x, x), from_none], self.requests),
+            "user_variables": from_union([lambda x: from_list(
+                lambda x: to_class(UserVariable, x), x), from_none], self.user_variables)}
         return result
 
-    async def create_user_variable(self, key: str, value: str, can_edit: bool) -> dict:
+    async def create_user_variable_async(self, key: str, value: str, can_edit: bool) -> dict:
         create_payload = {
             "key": key,
             "value": value,
             "can_user_edit": can_edit
         }
-
-        create_response = None
 
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
             async with session.post("/user/variables", json=create_payload) as resp:
@@ -207,13 +193,23 @@ class User:
 
         return create_response
 
-    async def change_email(self, new_email: str, password: str) -> dict:
+    def create_user_variable(self, key: str, value: str, can_edit: bool) -> dict:
+        create_payload = {
+            "key": key,
+            "value": value,
+            "can_user_edit": can_edit
+        }
+
+        req = requests.post(Authware.base_url + "/user/variables", json=create_payload, headers=Authware.headers)
+        create_response = Authware.check_response_sync(req)
+
+        return create_response
+
+    async def change_email_async(self, new_email: str, password: str) -> dict:
         change_payload = {
             "new_email_address": new_email,
             "password": password
         }
-
-        change_response = None
 
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
             async with session.put("/user/change-email", json=change_payload) as resp:
@@ -221,14 +217,12 @@ class User:
 
         return change_response
 
-    async def change_password(self, old_password: str, new_password: str, repeat_password: str) -> dict:
+    async def change_password_async(self, old_password: str, new_password: str, repeat_password: str) -> dict:
         change_payload = {
             "old_password": old_password,
             "password": new_password,
             "repeat_password": repeat_password
         }
-
-        change_response = None
 
         async with aiohttp.ClientSession(base_url=Authware.base_url, headers=Authware.headers) as session:
             async with session.put("/user/change-password", json=change_payload) as resp:
@@ -236,7 +230,7 @@ class User:
 
         return change_response
 
-    async def execute_api(self, api_id: str, params: dict) -> dict:
+    async def execute_api_async(self, api_id: str, params: dict) -> dict:
         execute_payload = {
             "api_id": api_id,
             "parameters": params
@@ -248,6 +242,39 @@ class User:
 
         return change_response
 
+    def change_email(self, new_email: str, password: str) -> dict:
+        change_payload = {
+            "new_email_address": new_email,
+            "password": password
+        }
+
+        req = requests.put(Authware.base_url + "/user/change-email", json=change_payload, headers=Authware.headers)
+        change_response = Authware.check_response_sync(req)
+
+        return change_response
+
+    def change_password(self, old_password: str, new_password: str, repeat_password: str) -> dict:
+        change_payload = {
+            "old_password": old_password,
+            "password": new_password,
+            "repeat_password": repeat_password
+        }
+
+        req = requests.put(Authware.base_url + "/user/change-password", json=change_payload, headers=Authware.headers)
+        change_response = Authware.check_response_sync(req)
+
+        return change_response
+
+    def execute_api(self, api_id: str, params: dict) -> dict:
+        execute_payload = {
+            "api_id": api_id,
+            "parameters": params
+        }
+
+        req = requests.post(Authware.base_url + "/api/execute", json=execute_payload, headers=Authware.headers)
+        change_response = Authware.check_response_sync(req)
+
+        return change_response
 
 def user_from_dict(s):
     return User.from_dict(s)
