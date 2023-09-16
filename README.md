@@ -17,6 +17,9 @@ pip install authware
 ## 📜 License
 Licensed under the MIT license, see LICENSE.MD
 
+## 📚 Documentation
+You can find all the documentation for the Python SDK [here](https://docs.authware.org/python-reference/quick-start)
+
 ## 📖 Open-source libraries
 - dateutil
 - wmi
